@@ -264,7 +264,7 @@
 const app = document.getElementById('app');
 let state = {
   configured: false,
-  config: { token: '', username: '', repo: 'docs' },
+  config: { token: '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', username: 'syd-watanabe', repo: 'PDFUPLOAD' },
   files: [],
   uploading: false,
   uploadResult: null,
@@ -703,6 +703,9 @@ function renderMain() {
 
 // Initial render
 render();
+
+// Auto-connect on load
+handleConnect();
 </script>
 </body>
 </html>
