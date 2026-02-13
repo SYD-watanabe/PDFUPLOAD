@@ -262,9 +262,18 @@
 
 <script>
 const app = document.getElementById('app');
+// Load saved config from localStorage
+const saved = (() => {
+  try {
+    const s = localStorage.getItem('pdf-uploader-config');
+    return s ? JSON.parse(s) : null;
+  } catch(e) { return null; }
+})();
+
 let state = {
   configured: false,
-  config: { token: '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', username: 'syd-watanabe', repo: 'PDFUPLOAD' },
+  config: saved || { token: '', username: '', repo: 'PDFUPLOAD' },
+  remember: !!saved,
   files: [],
   uploading: false,
   uploadResult: null,
@@ -373,6 +382,12 @@ async function handleConnect() {
     }
 
     setState({ configured: true });
+
+    // Save to localStorage if remember is checked
+    if (state.remember) {
+      localStorage.setItem('pdf-uploader-config', JSON.stringify(state.config));
+    }
+
     fetchRepoFiles();
   } catch(e) {
     setState({ error: '接続に失敗しました。ネットワークを確認してください。' });
@@ -505,6 +520,11 @@ function renderSetup() {
 
         ${error ? `<div class="error-box">${error}</div>` : ''}
 
+        <div style="margin-bottom: 18px; display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="input-remember" ${state.remember ? 'checked' : ''} style="width:16px; height:16px; cursor:pointer;">
+          <label for="input-remember" style="font-size:13px; color:#555; cursor:pointer; text-transform:none; letter-spacing:0;">次回から自動ログイン</label>
+        </div>
+
         <button class="btn btn-primary" id="btn-connect" ${(!config.token || !config.username || !config.repo) ? 'disabled' : ''}>
           接続する
         </button>
@@ -544,6 +564,9 @@ function renderSetup() {
     render();
   });
   document.getElementById('btn-connect').addEventListener('click', handleConnect);
+  document.getElementById('input-remember').addEventListener('change', e => {
+    state.remember = e.target.checked;
+  });
   document.getElementById('btn-help').addEventListener('click', () => {
     setState({ showSetup: !state.showSetup });
   });
@@ -671,7 +694,8 @@ function renderMain() {
 
   // Event listeners
   document.getElementById('btn-settings').addEventListener('click', () => {
-    setState({ configured: false, error: null });
+    localStorage.removeItem('pdf-uploader-config');
+    setState({ configured: false, error: null, remember: false });
   });
 
   const dropzone = document.getElementById('dropzone');
@@ -704,8 +728,10 @@ function renderMain() {
 // Initial render
 render();
 
-// Auto-connect on load
-handleConnect();
+// Auto-connect if saved config exists
+if (saved && saved.token && saved.username && saved.repo) {
+  handleConnect();
+}
 </script>
 </body>
 </html>
